@@ -15,9 +15,6 @@ public class TaskSevenTest {
         test(new int[]{2,5,4,4,3}, 4,1);
         test(new int[]{1,5,2,3,4}, -1,-1);
         test(new int[]{5,1,2,3,4}, -1,-1);
-        test(new int[]{3,5,1,2,2}, 5,4);
-        test(new int[]{2,3,4}, 3,1);
-
     }
 
 

@@ -1,74 +1,122 @@
 package com.example.tinkof;
 
-import java.util.Arrays;
-import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.*;
 
-public class TaskSeven {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        int n = scanner.nextInt();
-        int[] numbers = new int[n];
-        for (int i = 0; i < n; i++) {
-            numbers[i] = scanner.nextInt();
+// короче нужен граф
+// time complexity O(n)
+// space complexity O(n)
+
+
+class TaskSeven {
+    static class Graph {
+        private Map<Integer, List<Integer>> map = new LinkedHashMap<>();
+
+        private boolean all(boolean[] arr) {
+            for (boolean b : arr) {
+                if (!b) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public Graph(Map<Integer, List<Integer>> map) {
+            this.map = map;
+        }
+
+        public Graph(int size) {
+            for (int i = 0; i < size; i++) {
+                map.put(i+1, new ArrayList<>());
+            }
+        }
+
+        public void add(int key, List<Integer> list) {
+            map.put(key, list);
+        }
+
+        public List<Integer> get(int key) {
+            return map.get(key);
+        }
+
+        public Graph userClone() {
+            Map<Integer, List<Integer>> newMap = new LinkedHashMap<>();
+            for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+                newMap.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+            }
+            return new Graph(newMap);
+        }
+
+        public boolean checkLoop() {
+            boolean[] seen = new boolean[map.size() + 1];
+            seen[0] = true;
+
+            int target = 1;
+            while (!seen[target]) {
+                seen[target] = true;
+                target = map.get(target).get(0);
+            }
+            return all(seen);
+        }
+
+        public List<Integer> filter(int size) {
+            List<Integer> list = new ArrayList<>();
+            for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+                if (entry.getValue().size() == size) {
+                    list.add(entry.getKey());
+                }
+            }
+            return list;
+        }
+    }
+    public static void main(String[] args)  throws Exception{
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+        int count  = Integer.parseInt(bufferedReader.readLine());
+        int[] numbers = new int[count];
+        StringTokenizer tokenizer = new StringTokenizer(bufferedReader.readLine(), " ");
+        for (int i = 0; i < count; i++) {
+            numbers[i] = Integer.parseInt(tokenizer.nextToken());
         }
         int[] result = result(numbers);
-        System.out.println(result[0] + " " + result[1]);
-    }
-
-    private static int countOfGivers(int number, int[] numbers) {
-        int givers = 0;
-        for (int i = 0; i < numbers.length; i++) {
-            if (number != i + 1 && numbers[i] == number) {
-                givers++;
-            }
-        }
-        return givers;
-    }
-
-    private static boolean checkArray(int[] numbers) {
-        for (int i = 0; i < numbers.length; i++) {
-            if (countOfGivers(i + 1, numbers) != 1) {
-                return false;
-            }
-        }
-        return true;
+        System.out.printf("%d %d\n", result[0], result[1]);
     }
 
     protected static int[] result(int[] numbers) {
-        int number = findNumber(numbers);
-        if (number != -1) {
-            for (int i = 0; i < numbers.length; i++) {
-                int[] copy = Arrays.copyOf(numbers, numbers.length);
-                if (i + 1 == numbers[i] || numbers[i] > numbers.length) {
-                    copy[i] = number;
-                    if (checkArray(copy)) {
-                        return new int[]{i + 1, number};
-                    }
-
-                } else if (countOfGivers(numbers[i], numbers) > 1) {
-                    copy[i] = number;
-                    if (checkArray(copy)) {
-                        return new int[]{i + 1, number};
-                    }
-                }
+        Graph graph = new Graph(numbers.length);
+        for (int i = 0; i < numbers.length; i++) {
+            List<Integer> list = graph.get(numbers[i]);
+            if (list == null) {
+                List<Integer> newList = new ArrayList<>();
+                newList.add(i+ 1);
+                graph.add(numbers[i], newList);
+            } else {
+                list.add(i + 1);
             }
+        }
+        List<Integer> positionTwo = graph.filter(2);
+        List<Integer> positionZero = graph.filter(0);
 
+        if (positionTwo.size() == 1 && positionZero.size() == 1) {
+            int two = positionTwo.get(0);
+            int zero = positionZero.get(0);
+
+            Graph variant1 = graph.userClone();
+            int el1 = variant1.get(two).remove(0);
+            variant1.get(zero).add(el1);
+
+            Graph variant2 = graph.userClone();
+            int el2 = variant2.get(two).remove(1);
+            variant2.get(zero).add(el2);
+
+           if (variant1.checkLoop()) {
+               return new int[] {el1, zero};
+           } else if (variant2.checkLoop()) {
+               return new int[] {el2, zero};
+           }
         }
         return new int[]{-1, -1};
 
     }
 
-    private static int findNumber(int[] numbers) {
-        int number = -1;
-        for (int i = 0; i < numbers.length; i++) {
-            int count = countOfGivers(i + 1, numbers);
-            if (count == 0 && number == -1) {
-                number = i + 1;
-            } else if (count == 0 && number != -1) {
-                number = -1;
-                break;
-            }
-        }
-        return number;
-    }
 }
